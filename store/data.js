@@ -102,18 +102,24 @@ export const useDataStore = defineStore('data', {
                     });
                     if (data.value.success){
                         const {town, model, informant} = value;
-                        let n = this.town.findIndex( t => t.name.toLowerCase() === town.toLowerCase() );
-                        if ( n < 0 ){
-                            this.town.push({id: town, name: town});
+                        let n;
+                        if ( !empty(town) ){
+                            n = this.town.findIndex( t => t.name.toLowerCase() === town.toLowerCase() );
+                            if ( n < 0 ){
+                                this.town.push({id: town, name: town});
+                            }
                         }
-                        n = this.model.findIndex( m => m.name.toLowerCase() === model.toLowerCase() );
-                        if ( n < 0 ){
-                            this.model.push({id: model, name: model});
+                        if ( !empty(model) ){
+                            n = this.model.findIndex( m => m.name.toLowerCase() === model.toLowerCase() );
+                            if ( n < 0 ){
+                                this.model.push({id: model, name: model});
+                            }
                         }
-                        
-                        n = this.informant.findIndex( i => i.name.toLowerCase() === informant?.toLowerCase() );
-                        if ( n < 0 ){
-                            this.informant.push({id: informant, name: informant});
+                        if ( !empty(informant) ){
+                            n = this.informant.findIndex( i => i.name.toLowerCase() === informant?.toLowerCase() );
+                            if ( n < 0 ){
+                                this.informant.push({id: informant, name: informant});
+                            }
                         }
                         this.vehicle = data.value.data;
                         resolve(this.vehicle);

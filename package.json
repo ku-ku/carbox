@@ -19,6 +19,6 @@
     "inputmask": "^5.0.7",
     "jquery": "^3.6.3",
     "moment": "^2.29.4",
-    "vuetify": "^3.2.2"
+    "vuetify": "^3.3.2"
   }
 }

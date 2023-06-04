@@ -257,7 +257,7 @@
             </v-card-actions>
         </v-card>
         <cb-trip-tickets ref="tripTickets" 
-                         v-on:change="onticks" />
+                         v-on:ticks="onticks" />
     </v-form>
 </template>
 <script>
@@ -447,6 +447,7 @@ export default {
         });
         
         const onticks = ticks => {
+            console.log('onticks', ticks);
             vehicle.value.ticks = ticks;
         }
                 
@@ -480,7 +481,7 @@ export default {
     methods: {
         onsheets(e){
             (
-                    ('boolean' === typeof e)&&(!!e)
+                (!!e) && ('boolean' === typeof e)
             ) || ('boolean' !== typeof e) 
                 ? this.$refs["tripTickets"].open(this.vehicle)
                 : void(0);

@@ -59,7 +59,7 @@
                 </template>
                 <v-list nav
                         density="compact"
-                        active-color="primary"
+                        color="primary"
                         class="cb-sorting">
                     <v-list-subheader>сортировка записей</v-list-subheader>
                     <v-list-item v-on:click="sort=SORT_MODES.modified"
@@ -98,6 +98,12 @@
                                  title="Путевки по менеджерам...">
                         <template v-slot:prepend>
                             <v-icon size="small">mdi-chart-donut-variant</v-icon>
+                        </template>
+                    </v-list-item>
+                    <v-list-item v-on:click="showInfo(2)"
+                                 title="Оплаты по месяцам...">
+                        <template v-slot:prepend>
+                            <v-icon size="small">mdi-cash-100</v-icon>
                         </template>
                     </v-list-item>
                 </v-list>

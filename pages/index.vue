@@ -7,7 +7,7 @@
                          :key="'vc-' + v.id"
                          :class="itemClass(v)"
                          :value="v.id"
-                         active-color="green"
+                         color="green"
                          select-strategy="classic"
                          v-on:click="edit(v)">
                 <template v-slot:prepend>
@@ -49,6 +49,12 @@
                     </v-col>
                     <v-col class="cb-vehicle__ticks">
                         <template v-if="!!v.lastTick">
+                            <v-tooltip v-if="!!v.lastTick.note"
+                                       :text="v.lastTick.note">
+                                <template v-slot:activator="{ props }">
+                                    <v-icon v-bind="props">mdi-information-outline</v-icon>&nbsp;
+                                </template>    
+                            </v-tooltip>
                             <b>{{ v.lastTick.num }}</b>&nbsp;/&nbsp;
                             <v-chip v-if="v.lastTick.paid" 
                                     color="success"

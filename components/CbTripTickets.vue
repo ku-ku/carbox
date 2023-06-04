@@ -1,7 +1,7 @@
 <template>
     <v-dialog v-model="show"
               scroll
-              max-width="720"
+              max-width="760"
               min-height="640"
               content-class="cb-trip-tickets">
         <v-toolbar density="compact"
@@ -11,15 +11,13 @@
                 {{ vehicle.gov }}
             </v-toolbar-title>
             <v-spacer />
-            <v-btn icon
+            <v-btn icon="mdi-close"
+                   color="white"
                    v-on:click="show=false">
-                <v-icon size="small"
-                        color="white">
-                    mdi-close
-                </v-icon>
             </v-btn>
         </v-toolbar>
-        <v-card flat>
+        <v-card flat
+                rouded="0">
             <v-card-text>
                 <v-data-table density="compact"
                               :headers="headers"
@@ -39,15 +37,15 @@
                             <td>
                                 <cb-date-input placeholder="Дата" 
                                                type="date"
-                                               :value="item.value.dt"
-                                               v-on:ondate="item.value.dt = $event"></cb-date-input>
+                                               :value="item.raw.dt"
+                                               v-on:ondate="item.raw.dt = $event"></cb-date-input>
                             </td>
                             <td class="text-right numof">
                                 <v-text-field placeholder="Количество"
                                               type="number"
                                               data-selected-all="1"
                                               density="compact"
-                                              v-model="item.value.num"></v-text-field>
+                                              v-model="item.raw.num"></v-text-field>
                             </td>
                             <td v-if="isadmin">
                                 <v-autocomplete placeholder="Оплата"
@@ -58,33 +56,41 @@
                                     density="compact"
                                     :return-object="false"
                                     :items="payments"
-                                    v-model="item.value.pay">
+                                    v-model="item.raw.pay">
                                 </v-autocomplete>
+                            </td>
+                            <td class="note">
+                                <v-text-field placeholder="примечание"
+                                              data-selected-all="1"
+                                              density="compact"
+                                              v-model="item.raw.note"></v-text-field>
                             </td>
                             <td>
                                 <v-btn size="small"
                                        flat
-                                       v-on:click="sel(-1)">
-                                    <v-icon size="small">mdi-check-bold</v-icon>
+                                       icon="mdi-check-bold"
+                                       v-on:click.stop="sel(-1)">
                                 </v-btn>
                                 <v-btn size="small"
+                                       icon="mdi-close-thick"
                                        flat
-                                       v-on:click="sel(-1)">
-                                    <v-icon size="small">mdi-close-thick</v-icon>
+                                       v-on:click.stop="sel(-1)">
                                 </v-btn>
                             </td>
-                            
                         </tr>
                         <tr v-else
                             :key="'item-' + index">
                             <td>
-                                {{ $moment(item.value.dt).format('DD.MM.YYYY') }}
+                                {{ (item.raw.dt) ? $moment(item.raw.dt).format('DD.MM.YYYY') : null }}
                             </td>
                             <td  class="text-right numof">
-                                {{ item.value.num }}
+                                {{ item.raw.num }}
                             </td>
                             <td v-if="isadmin">
-                               {{ item.value.pay }} 
+                               {{ item.raw.pay }} 
+                            </td>
+                            <td class="text-truncate note">
+                                {{ item.raw.note }}
                             </td>
                             <td class="actions">
                                 <v-btn icon="mdi-file-document-edit"
@@ -99,7 +105,7 @@
                                 </v-btn>
                             </td>
                         </tr>
-                        </template>
+                    </template>
                 </v-data-table>
             </v-card-text>
             <v-card-actions>
@@ -140,8 +146,8 @@ export default {
                 {
                     title: 'Дата',
                     align: 'center',
-                    value: 'dt',
-                    width: "10rem"
+                    key:   'dt',
+                    width: '8rem'
                 },
                 { 
                     title: 'Количество', 
@@ -155,6 +161,12 @@ export default {
                     key:   'pay',
                     width: '9rem'
                 },
+                { 
+                    title: 'примечание', 
+                    align: 'left', 
+                    key:   'note',
+                    width: '10rem'
+                },
                 { title: ' ', align: 'center', value: 'acts' }
         ];
         
@@ -164,6 +176,7 @@ export default {
         
         return {
             isadmin,
+            payments: useDataStore().payment,
             headers
         };
     },
@@ -171,31 +184,47 @@ export default {
         return {
             $moment,
             show: false,
-            payments: useDataStore().payment,
             vehicle: null,
             ticks: []   //copy for modify & saving
         };
     },
     methods: {
+        log(v){
+            console.log(v);
+        },
         has(q, val){
             switch(q){
                 case 'item':
                     console.log('has-item', val);
                     return true;
                 case 'selected':
-                    return !!val.value.selected;
+                    return !!val.raw?.selected;
             }
             return false;
         },
         open(vehicle){
+            console.log('open (vehicle)', vehicle);
             this.vehicle = vehicle;
-            this.ticks = (typeof vehicle.ticks==="undefined") ? [] : [...vehicle.ticks];
+            this.ticks = [];
+            if (typeof vehicle.ticks!=="undefined") {
+                this.ticks = this.ticks.concat([...vehicle.ticks].map( t => { 
+                                    var t = unref(t);
+                                    t.selected = false; 
+                                    if (typeof t.note === "undefined"){
+                                        t.note = null;
+                                    }
+                                    return {...t};
+                            })
+                );
+            }
+            console.log('open (ticks)', this.ticks);
             this.show = true;
-            console.log('ticks', this.ticks);
         },
         sel(n){
+            console.log('sel #', n);
             this.ticks.forEach( (item, i) => {
-                item.value.selected = (i === n);
+                console.log(item);
+                item.selected = (i === n);
             });
             if ( n > -1 ){
                 this.$nextTick(()=>{
@@ -204,10 +233,11 @@ export default {
             }
         },
         add(){
-            const item = ref({
+            const item = {
                 dt: new Date(),
                 num: 0
-            });
+            };
+            item.dt.setHours(0,0,0,0);
             const n = this.ticks.push(item);
             this.sel( n - 1 );
         },
@@ -219,10 +249,12 @@ export default {
         },
         save(){
             this.show = false;
+            const res = [];
             this.ticks?.forEach( t => {
                 t.selected = false;
+                res.push(ref(t));
             });
-            this.$emit('change', this.ticks);
+            this.$emit('ticks', res);
         }
     }
 }
@@ -235,11 +267,19 @@ export default {
             }
         }
         & .v-data-table{
+            font-size: 0.9rem;
             &-footer{
                 display: none !important;
             }
             & td{
+                font-size: 0.9rem;
                 vertical-align: text-bottom;
+                &:last-child{
+                    white-space: nowrap;
+                }
+                &.note{
+                    width: 10rem;
+                }
             }
             & td.numof{
                 text-align: right !important;

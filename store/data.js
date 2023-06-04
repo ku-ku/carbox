@@ -90,7 +90,8 @@ export const useDataStore = defineStore('data', {
                         taxi.ticks.push({
                                 num: t.num,
                                 dt:  t.dt,
-                                pay: t.pay
+                                pay: t.pay,
+                                note: t.note
                             });
                     });
                     

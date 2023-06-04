@@ -71,6 +71,15 @@
                             </v-autocomplete>
                         </v-col>
                     </v-row>    
+                    <v-row>
+                        <v-col cols="12">
+                            <v-text-field label="примечание"
+                                          v-model="note"
+                                          clearable>
+                                              
+                            </v-text-field>
+                        </v-col>
+                    </v-row>    
                 </v-card-text>
                 <v-card-actions class="py-5">
                     <v-btn size="small"
@@ -92,7 +101,7 @@
 <script>
 import $moment from "moment";
 $moment.locale('ru');
-import { ref } from "vue";
+import { ref, unref } from "vue";
 import { useDataStore } from "~/store/data";
 import { empty } from "~/utils";
 
@@ -112,7 +121,8 @@ export default {
             ticks: [],   //copy for modify & saving
             dt: null,
             pay: null,
-            num: null
+            num: null,
+            note: null
         };
     },
     computed: {
@@ -130,11 +140,22 @@ export default {
     methods: {
         open(vehicle){
             this.vehicle = vehicle;
-            this.ticks = (typeof vehicle.ticks==="undefined") ? [] : [...vehicle.ticks];
+            this.ticks = [];
+            if (typeof vehicle.ticks !=="undefined") {
+                this.ticks = this.ticks.concat([...vehicle.ticks].map( t => { 
+                                    var t = unref(t);
+                                    if (typeof t.note === "undefined"){
+                                        t.note = null;
+                                    }
+                                    return { ...t };
+                            })
+                );
+            }
             this.dt = null;
             this.pay= null;
             this.num= null;
-            
+            this.note= null;
+            console.log('ticks', this.ticks);
             this.show = true;
             this.$nextTick(()=>{
                 $("form").find("input[name=tickdt]").trigger("focus");
@@ -150,12 +171,12 @@ export default {
                         if ( n > -1){
                             this.pay = this.ticks[n].pay;
                             this.num = this.ticks[n].num;
+                            this.note = this.ticks[n].note;
                         }
                         this.$nextTick(()=>{
                             this.$refs["dt"].resetValidation();
                         });
                     }
-                    
                     break;
             }
         },  //set
@@ -167,10 +188,9 @@ export default {
             const ticks = [...this.ticks];
             const n = ticks.findIndex( t => $moment(t.dt).format('YYYYMM') == $moment(this.dt).format('YYYYMM') );
             if ( n > -1 ){
-                ticks.splice( n );
+                ticks.splice( n, 1 );
             }
-            ticks.push({dt: this.dt, num: this.num, pay: this.pay});
-            
+            ticks.push({dt: this.dt, num: this.num, pay: this.pay, note: this.note});
             this.vehicle.ticks = ref(ticks);
             const ds = useDataStore();
             ds.save( ref(this.vehicle) ).then( ({data, error}) => {
